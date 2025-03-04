@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(react)
+project(react_embedding)
 
 # Use the FindBoost provided by CMake, rather than the one provided by Boost
 # (for CMake >=3.30).
