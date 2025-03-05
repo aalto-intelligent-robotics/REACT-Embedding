@@ -33,7 +33,7 @@ def get_embedding_model(
     backbone: str,
     weights: Union[str, None] = None,
 ) -> EmbeddingNet:
-    embedding_model = EmbeddingNet(model=create_model(backbone))
+    embedding_model = EmbeddingNet(model=create_model(backbone, pretrained=True))
     if weights is not None:
         embedding_model.load_state_dict(
             state_dict=torch.load(weights, weights_only=True)

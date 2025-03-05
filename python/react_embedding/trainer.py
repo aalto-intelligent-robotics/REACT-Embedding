@@ -32,8 +32,6 @@ def fit(
     train_loss_hist = []
     val_loss_hist = []
     for epoch in range(start_epoch, n_epochs):
-        scheduler.step()
-
         # Train stage
         train_loss, metrics = train_epoch(
             train_loader, model, loss_fn, optimizer, cuda, log_interval, metrics
@@ -56,6 +54,8 @@ def fit(
 
         train_loss_hist.append(train_loss)
         val_loss_hist.append(val_loss)
+        scheduler.step()
+
         print(message)
     return train_loss_hist, val_loss_hist
 

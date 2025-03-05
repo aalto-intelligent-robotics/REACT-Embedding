@@ -14,7 +14,11 @@ from react_embedding.embedding_net import get_embedding_model
 from react_embedding.losses import OnlineTripletLoss
 from react_embedding.metrics import AverageNonzeroTripletsMetric
 from react_embedding.trainer import fit
-from react_embedding.triplet_selector import RandomNegativeTripletSelector
+from react_embedding.triplet_selector import (
+    RandomNegativeTripletSelector,
+    SemihardNegativeTripletSelector,
+    HardestNegativeTripletSelector,
+)
 from react_embedding.utils import SquarePad
 
 
@@ -27,7 +31,8 @@ def form_ds(dataset_path: str) -> Tuple[InstancesDataset, InstancesDataset]:
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
     )
-    transform_train = transforms.Compose( [
+    transform_train = transforms.Compose(
+        [
             SquarePad(),
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
@@ -55,12 +60,16 @@ def main(args: argparse.Namespace):
     )
     model = get_embedding_model(backbone="efficientnet_b2")
     margin = 1.0
-    loss_fn = OnlineTripletLoss(margin, RandomNegativeTripletSelector(margin))
+    # loss_fn = OnlineTripletLoss(margin, RandomNegativeTripletSelector(margin))
+    loss_fn = OnlineTripletLoss(margin, HardestNegativeTripletSelector(margin))
+    # loss_fn = OnlineTripletLoss(margin, SemihardNegativeTripletSelector(margin))
     lr = args.lr
-    weight_decay=1e-4
+    weight_decay = 1e-4
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=8, gamma=0.1, last_epoch=-1)
-    n_epochs = 20
+    scheduler = optim.lr_scheduler.StepLR(
+        optimizer, step_size=10, gamma=0.5, last_epoch=-1
+    )
+    n_epochs = args.epochs
     log_interval = 50
     train_hist, val_hist = fit(
         train_loader=trainloader,
