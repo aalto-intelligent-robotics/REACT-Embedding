@@ -11,7 +11,7 @@ import numpy as np
 import time
 import argparse
 
-from react.core.object_nodes import ObjectNode
+from react.core.object_node import ObjectNode
 from react.utils.read_data import get_bbox
 
 
@@ -45,7 +45,7 @@ def get_instance_view(
     return image
 
 
-def register_hydra_nodes_from_json_data(
+def register_object_nodes_from_json_data(
     scan_id: int,
     instance_views_data: Dict,
     dsg_data: Dict,
@@ -159,45 +159,41 @@ def are_same_objects(node: ObjectNode, other_node: ObjectNode):
             print("Answer in y/n")
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--scene_graph", type=str, default="flat1")
-    opts = parser.parse_args()
+def main(args: argparse.Namespace):
     logging.basicConfig(
         format="[%(asctime)s %(filename)s][%(levelname)s]: %(message)s",
         level=logging.INFO,
     )
     SCAN_ID = 0
 
-    DSG_PATH = "/home/ros/dsg_output/"
-    SCENE_GRAPH = opts.scene_graph
-    with open(f"{DSG_PATH}/{SCENE_GRAPH}/instance_views/instance_views.json") as f:
+    scene_graph_path = args.scene_graph
+    with open(f"{scene_graph_path}/instance_views/instance_views.json") as f:
         instance_views_data = json.load(f)
-    with open(f"{DSG_PATH}/{SCENE_GRAPH}/map_views/map_views.json") as f:
+    with open(f"{scene_graph_path}/map_views/map_views.json") as f:
         map_views_data = json.load(f)
-    with open(f"{DSG_PATH}/{SCENE_GRAPH}/backend/dsg.json") as f:
+    with open(f"{scene_graph_path}/backend/dsg.json") as f:
         dsg_data = json.load(f)
 
     # {map_view_id -> image}
     map_views = register_map_views(map_views_data)
     # Has instance_views: {map_view_id -> mask}
-    hydra_nodes = register_hydra_nodes_from_json_data(
+    object_nodes = register_object_nodes_from_json_data(
         scan_id=SCAN_ID,
         instance_views_data=instance_views_data,
         dsg_data=dsg_data,
         map_views=map_views,
     )
-    OUTPUT_DIR = "./instance_views/"
+    OUTPUT_DIR = args.output
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     instance_sets: Dict[int, List[np.ndarray]] = {}
     checked_ids = set()
-    for node in hydra_nodes.values():
+    for node in object_nodes.values():
         if node.node_id not in checked_ids:
             checked_ids.add(node.node_id)
             instance_sets[node.node_id] = list(node.instance_views.values())
             for other_node in [
                 n
-                for n in hydra_nodes.values()
+                for n in object_nodes.values()
                 if n.class_id == node.class_id and n.node_id not in checked_ids
             ]:
                 if are_same_objects(node, other_node):
@@ -212,4 +208,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--scene_graph", type=str, default="/home/ros/dsg_output/coffee_room_1/")
+    parser.add_argument("-o", "--output", type=str, default="./instance_views_coffee_room_1/")
+    args = parser.parse_args()
+    main(args)

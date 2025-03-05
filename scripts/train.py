@@ -60,8 +60,8 @@ def main(args: argparse.Namespace):
     )
     model = get_embedding_model(backbone="efficientnet_b2")
     margin = 1.0
-    # loss_fn = OnlineTripletLoss(margin, RandomNegativeTripletSelector(margin))
-    loss_fn = OnlineTripletLoss(margin, HardestNegativeTripletSelector(margin))
+    loss_fn = OnlineTripletLoss(margin, RandomNegativeTripletSelector(margin))
+    # loss_fn = OnlineTripletLoss(margin, HardestNegativeTripletSelector(margin))
     # loss_fn = OnlineTripletLoss(margin, SemihardNegativeTripletSelector(margin))
     lr = args.lr
     weight_decay = 1e-4
@@ -93,11 +93,23 @@ def main(args: argparse.Namespace):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-d", "--dataset-path", type=str, default="./dataset_coffee_room_1/"
+        "-d",
+        "--dataset-path",
+        type=str,
+        default="./dataset_coffee_room_1/",
+        help="Path to dataset",
     )
-    parser.add_argument("-b", "--batch-size", type=int, default=16)
-    parser.add_argument("-e", "--epochs", type=int, default=20)
-    parser.add_argument("-lr", type=float, default=1e-3)
-    parser.add_argument("-o", "--output", type=str, default="embedding_coffee_room.pth")
+    parser.add_argument("-b", "--batch-size", type=int, default=32, help="Batch size")
+    parser.add_argument(
+        "-e", "--epochs", type=int, default=30, help="Number of training epochs"
+    )
+    parser.add_argument("-lr", type=float, default=1e-3, help="Initial learning rate")
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        default="embedding_coffee_room.pth",
+        help="Output weights path",
+    )
     args = parser.parse_args()
     main(args)
